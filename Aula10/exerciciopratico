@@ -1,0 +1,49 @@
+from abc import ABC, abstractmethod
+
+# 1. Interface comum: Define o que tanto o Proxy quanto o Serviço Real devem fazer.
+class Servico(ABC):
+    @abstractmethod
+    def executar(self):
+        pass
+
+# 2. Objeto Real: O serviço que faz o trabalho pesado ou importante.
+class ServicoReal(Servico):
+    def executar(self):
+        return "Conectado ao servidor: Dados processados com sucesso!"
+
+# 3. Proxy de Controle: Gerencia o acesso ao ServicoReal.
+class ProxyLimiteAcesso(Servico):
+    def __init__(self):
+        # Inicializa o serviço real como None (Lazy Initialization)
+        self._servico_real = None
+        # Contador interno para monitorar o uso
+        self._tentativas = 0
+        self._limite = 3
+
+    def executar(self):
+        # Incrementa o número de acessos toda vez que o método é chamado
+        self._tentativas += 1
+        
+        # Verifica se o limite foi atingido
+        if self._tentativas <= self._limite:
+            # Cria o objeto real apenas se necessário (na primeira tentativa válida)
+            if self._servico_real is None:
+                self._servico_real = ServicoReal()
+            
+            print(f"[Acesso {self._tentativas}/{self._limite}] Permitido.")
+            return self._servico_real.executar()
+        else:
+            # Bloqueia a execução após a 3ª tentativa
+            return f"[Acesso {self._tentativas}] Bloqueado: Limite de {self._limite} tentativas excedido."
+
+# --- Uso do Código ---
+
+# Criamos o Proxy em vez do objeto real diretamente
+meu_servico = ProxyLimiteAcesso()
+
+# Simulando várias chamadas
+print(meu_servico.executar()) # 1ª tentativa: OK
+print(meu_servico.executar()) # 2ª tentativa: OK
+print(meu_servico.executar()) # 3ª tentativa: OK
+print(meu_servico.executar()) # 4ª tentativa: Bloqueado
+print(meu_servico.executar()) # 5ª tentativa: Bloqueado
